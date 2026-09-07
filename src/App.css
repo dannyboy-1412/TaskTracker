@@ -1,0 +1,131 @@
+.app {
+  width: min(40rem, calc(100% - 2rem));
+  margin: 3rem auto;
+  padding: 1.75rem 1.5rem 2rem;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+}
+
+.header {
+  margin-bottom: 1.25rem;
+}
+
+.week {
+  margin: 0.35rem 0 0;
+  color: var(--muted);
+}
+
+.composer {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.composer input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text-h);
+}
+
+.composer button,
+.filters button,
+.delete {
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.composer button {
+  padding: 0.65rem 1rem;
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+.filters {
+  display: flex;
+  gap: 0.4rem;
+  margin: 1rem 0;
+}
+
+.filters button {
+  padding: 0.4rem 0.75rem;
+  background: transparent;
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.filters button[aria-pressed='true'] {
+  background: var(--accent);
+  color: var(--accent-text);
+  border-color: var(--accent);
+}
+
+.empty {
+  margin: 1.5rem 0 0;
+  color: var(--muted);
+}
+
+.tasks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tasks li {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 0;
+  border-top: 1px solid var(--border);
+}
+
+.tasks li:first-child {
+  border-top: 0;
+}
+
+.tasks label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  flex: 1;
+  min-width: 0;
+  color: var(--text-h);
+}
+
+.tasks input[type='checkbox'] {
+  margin-top: 0.2rem;
+  accent-color: var(--accent);
+}
+
+.tasks.done span,
+.tasks li.done span {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.delete {
+  padding: 0.3rem 0.55rem;
+  background: transparent;
+  color: var(--danger);
+  border-color: transparent;
+}
+
+.delete:hover {
+  border-color: var(--danger);
+}
+
+@media (max-width: 520px) {
+  .app {
+    margin: 1rem auto;
+    padding: 1.25rem 1rem 1.5rem;
+  }
+
+  .composer {
+    flex-direction: column;
+  }
+}
