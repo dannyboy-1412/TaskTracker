@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import {
+  addSubtask,
   addTask,
+  deleteSubtask,
   deleteTask,
   formatWeekRange,
   loadStore,
   refreshStore,
   taskOriginLabel,
+  toggleSubtask,
   toggleTask,
   type Task,
   type TaskStore,
@@ -31,6 +34,111 @@ function emptyMessage(taskCount: number, filter: Filter): string {
   if (filter === 'active') return 'No active tasks.'
   if (filter === 'done') return 'No completed tasks.'
   return 'No tasks this week.'
+}
+
+function TaskItem({
+  task,
+  weekStart,
+  onToggle,
+  onDelete,
+  onAddSubtask,
+  onToggleSubtask,
+  onDeleteSubtask,
+}: {
+  task: Task
+  weekStart: string
+  onToggle: () => void
+  onDelete: () => void
+  onAddSubtask: (title: string) => void
+  onToggleSubtask: (subtaskId: string) => void
+  onDeleteSubtask: (subtaskId: string) => void
+}) {
+  const [open, setOpen] = useState(task.subtasks.length > 0)
+  const [itemTitle, setItemTitle] = useState('')
+  const doneCount = task.subtasks.filter((item) => item.done).length
+  const itemLabel =
+    task.subtasks.length === 0
+      ? 'Items'
+      : `Items ${doneCount}/${task.subtasks.length}`
+
+  function onAddItem(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    onAddSubtask(itemTitle)
+    setItemTitle('')
+    setOpen(true)
+  }
+
+  return (
+    <li className={task.done ? 'done' : undefined}>
+      <div className="task-row">
+        <label>
+          <input type="checkbox" checked={task.done} onChange={onToggle} />
+          <span className="task-copy">
+            <span className="task-title">{task.title}</span>
+            <span className="origin">
+              {taskOriginLabel(task.createdAt, weekStart)}
+            </span>
+          </span>
+        </label>
+        <div className="task-actions">
+          <button
+            type="button"
+            className="items-toggle"
+            aria-expanded={open}
+            onClick={() => setOpen((value) => !value)}
+          >
+            {itemLabel}
+          </button>
+          <button type="button" className="delete" onClick={onDelete}>
+            Delete
+          </button>
+        </div>
+      </div>
+
+      {open ? (
+        <div className="subtasks">
+          {task.subtasks.length === 0 ? (
+            <p className="subtasks-empty">Add items for this task.</p>
+          ) : (
+            <ul>
+              {task.subtasks.map((item) => (
+                <li key={item.id} className={item.done ? 'done' : undefined}>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={item.done}
+                      onChange={() => onToggleSubtask(item.id)}
+                    />
+                    <span className="task-title">{item.title}</span>
+                  </label>
+                  <button
+                    type="button"
+                    className="delete"
+                    onClick={() => onDeleteSubtask(item.id)}
+                  >
+                    Delete
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          <form className="item-composer" onSubmit={onAddItem}>
+            <label className="sr-only" htmlFor={`item-${task.id}`}>
+              New item
+            </label>
+            <input
+              id={`item-${task.id}`}
+              value={itemTitle}
+              onChange={(event) => setItemTitle(event.target.value)}
+              placeholder="Add an item"
+              autoComplete="off"
+            />
+            <button type="submit">Add</button>
+          </form>
+        </div>
+      ) : null}
+    </li>
+  )
 }
 
 export default function App() {
@@ -81,6 +189,7 @@ export default function App() {
           onChange={(event) => setTitle(event.target.value)}
           placeholder="Add a task"
           autoComplete="off"
+          enterKeyHint="done"
         />
         <button type="submit">Add</button>
       </form>
@@ -103,32 +212,30 @@ export default function App() {
       ) : (
         <ul className="tasks">
           {shown.map((task) => (
-            <li key={task.id} className={task.done ? 'done' : undefined}>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={task.done}
-                  onChange={() =>
-                    setStore((current) => toggleTask(current, task.id))
-                  }
-                />
-                <span className="task-copy">
-                  <span className="task-title">{task.title}</span>
-                  <span className="origin">
-                    {taskOriginLabel(task.createdAt, store.weekStart)}
-                  </span>
-                </span>
-              </label>
-              <button
-                type="button"
-                className="delete"
-                onClick={() =>
-                  setStore((current) => deleteTask(current, task.id))
-                }
-              >
-                Delete
-              </button>
-            </li>
+            <TaskItem
+              key={task.id}
+              task={task}
+              weekStart={store.weekStart}
+              onToggle={() =>
+                setStore((current) => toggleTask(current, task.id))
+              }
+              onDelete={() =>
+                setStore((current) => deleteTask(current, task.id))
+              }
+              onAddSubtask={(itemTitle) =>
+                setStore((current) => addSubtask(current, task.id, itemTitle))
+              }
+              onToggleSubtask={(subtaskId) =>
+                setStore((current) =>
+                  toggleSubtask(current, task.id, subtaskId),
+                )
+              }
+              onDeleteSubtask={(subtaskId) =>
+                setStore((current) =>
+                  deleteSubtask(current, task.id, subtaskId),
+                )
+              }
+            />
           ))}
         </ul>
       )}

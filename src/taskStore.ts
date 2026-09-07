@@ -1,8 +1,15 @@
+export type Subtask = {
+  id: string
+  title: string
+  done: boolean
+}
+
 export type Task = {
   id: string
   title: string
   done: boolean
   createdAt: string
+  subtasks: Subtask[]
 }
 
 export type TaskStore = {
@@ -74,10 +81,12 @@ export function emptyStore(now = new Date()): TaskStore {
 
 export function normalizeStore(store: TaskStore, now = new Date()): TaskStore {
   const cutoff = now.getTime() - TASK_TTL_MS
-  const tasks = store.tasks.filter((task) => {
-    const created = Date.parse(task.createdAt)
-    return !Number.isNaN(created) && created >= cutoff
-  })
+  const tasks = store.tasks
+    .map((task) => ({ ...task, subtasks: task.subtasks ?? [] }))
+    .filter((task) => {
+      const created = Date.parse(task.createdAt)
+      return !Number.isNaN(created) && created >= cutoff
+    })
 
   const currentWeekStart = toIsoDate(mondayOf(now))
   const storedWeek = ISO_DATE.test(store.weekStart)
@@ -98,15 +107,34 @@ export function normalizeStore(store: TaskStore, now = new Date()): TaskStore {
   return { weekStart: store.weekStart, tasks }
 }
 
-function isTask(value: unknown): value is Task {
+function isSubtask(value: unknown): value is Subtask {
   if (typeof value !== 'object' || value === null) return false
-  const task = value as Record<string, unknown>
+  const item = value as Record<string, unknown>
   return (
-    typeof task.id === 'string' &&
-    typeof task.title === 'string' &&
-    typeof task.done === 'boolean' &&
-    typeof task.createdAt === 'string'
+    typeof item.id === 'string' &&
+    typeof item.title === 'string' &&
+    typeof item.done === 'boolean'
   )
+}
+
+function parseTask(value: unknown): Task | null {
+  if (typeof value !== 'object' || value === null) return null
+  const task = value as Record<string, unknown>
+  if (
+    typeof task.id !== 'string' ||
+    typeof task.title !== 'string' ||
+    typeof task.done !== 'boolean' ||
+    typeof task.createdAt !== 'string'
+  ) {
+    return null
+  }
+  return {
+    id: task.id,
+    title: task.title,
+    done: task.done,
+    createdAt: task.createdAt,
+    subtasks: Array.isArray(task.subtasks) ? task.subtasks.filter(isSubtask) : [],
+  }
 }
 
 function parseStore(raw: string): TaskStore | null {
@@ -117,7 +145,12 @@ function parseStore(raw: string): TaskStore | null {
     if (typeof store.weekStart !== 'string' || !Array.isArray(store.tasks)) {
       return null
     }
-    return { weekStart: store.weekStart, tasks: store.tasks.filter(isTask) }
+    return {
+      weekStart: store.weekStart,
+      tasks: store.tasks
+        .map(parseTask)
+        .filter((task): task is Task => task !== null),
+    }
   } catch {
     return null
   }
@@ -157,6 +190,7 @@ export function addTask(
         title: trimmed,
         done: false,
         createdAt: now.toISOString(),
+        subtasks: [],
       },
     ],
   }
@@ -182,4 +216,53 @@ export function deleteTask(store: TaskStore, id: string): TaskStore {
   }
   saveStore(next)
   return next
+}
+
+function updateTask(
+  store: TaskStore,
+  taskId: string,
+  update: (task: Task) => Task,
+): TaskStore {
+  const next: TaskStore = {
+    ...store,
+    tasks: store.tasks.map((task) => (task.id === taskId ? update(task) : task)),
+  }
+  saveStore(next)
+  return next
+}
+
+export function addSubtask(store: TaskStore, taskId: string, title: string): TaskStore {
+  const trimmed = title.trim()
+  if (!trimmed) return store
+  return updateTask(store, taskId, (task) => ({
+    ...task,
+    subtasks: [
+      ...task.subtasks,
+      { id: crypto.randomUUID(), title: trimmed, done: false },
+    ],
+  }))
+}
+
+export function toggleSubtask(
+  store: TaskStore,
+  taskId: string,
+  subtaskId: string,
+): TaskStore {
+  return updateTask(store, taskId, (task) => ({
+    ...task,
+    subtasks: task.subtasks.map((item) =>
+      item.id === subtaskId ? { ...item, done: !item.done } : item,
+    ),
+  }))
+}
+
+export function deleteSubtask(
+  store: TaskStore,
+  taskId: string,
+  subtaskId: string,
+): TaskStore {
+  return updateTask(store, taskId, (task) => ({
+    ...task,
+    subtasks: task.subtasks.filter((item) => item.id !== subtaskId),
+  }))
 }
