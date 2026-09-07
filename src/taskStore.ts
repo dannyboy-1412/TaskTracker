@@ -72,6 +72,68 @@ export function formatWeekRange(weekStart: string): string {
   return `${startLabel} – ${endLabel}`
 }
 
+export type TaskListSection =
+  | { kind: 'earlier'; tasks: Task[] }
+  | { kind: 'pastDay'; date: string; label: string; tasks: Task[] }
+  | { kind: 'today'; tasks: Task[] }
+
+export function openTaskCount(tasks: Task[]): number {
+  return tasks.filter((task) => !task.done).length
+}
+
+function weekdayLabel(isoDate: string): string {
+  return parseIsoDate(isoDate).toLocaleDateString('en-GB', { weekday: 'long' })
+}
+
+export function groupTasksForList(
+  tasks: Task[],
+  weekStart: string,
+  now = new Date(),
+): TaskListSection[] {
+  const today = toIsoDate(now)
+  const earlier: Task[] = []
+  const todayTasks: Task[] = []
+  const pastByDate = new Map<string, Task[]>()
+
+  for (const task of tasks) {
+    const date = toIsoDate(new Date(task.createdAt))
+    if (date < weekStart) {
+      earlier.push(task)
+      continue
+    }
+    if (date >= today) {
+      todayTasks.push(task)
+      continue
+    }
+    const existing = pastByDate.get(date)
+    if (existing) {
+      existing.push(task)
+    } else {
+      pastByDate.set(date, [task])
+    }
+  }
+
+  const sections: TaskListSection[] = []
+  if (earlier.length > 0) {
+    sections.push({ kind: 'earlier', tasks: earlier })
+  }
+  const pastDays = [...pastByDate.entries()].sort(([left], [right]) =>
+    left < right ? -1 : left > right ? 1 : 0,
+  )
+  for (const [date, dayTasks] of pastDays) {
+    sections.push({
+      kind: 'pastDay',
+      date,
+      label: weekdayLabel(date),
+      tasks: dayTasks,
+    })
+  }
+  if (todayTasks.length > 0) {
+    sections.push({ kind: 'today', tasks: todayTasks })
+  }
+  return sections
+}
+
 export function emptyStore(now = new Date()): TaskStore {
   return {
     weekStart: toIsoDate(mondayOf(now)),

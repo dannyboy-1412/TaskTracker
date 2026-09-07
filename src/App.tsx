@@ -1,11 +1,13 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react'
 import {
   addSubtask,
   addTask,
   deleteSubtask,
   deleteTask,
   formatWeekRange,
+  groupTasksForList,
   loadStore,
+  openTaskCount,
   refreshStore,
   taskOriginLabel,
   toggleSubtask,
@@ -36,9 +38,46 @@ function emptyMessage(taskCount: number, filter: Filter): string {
   return 'No tasks this week.'
 }
 
+function DayGroup({
+  id,
+  label,
+  remaining,
+  open,
+  onToggle,
+  children,
+}: {
+  id: string
+  label: string
+  remaining: number
+  open: boolean
+  onToggle: () => void
+  children: ReactNode
+}) {
+  return (
+    <li className="day-group">
+      <button
+        type="button"
+        className="day-toggle"
+        aria-expanded={open}
+        aria-controls={`day-${id}`}
+        onClick={onToggle}
+      >
+        <span className="day-label">{label}</span>
+        <span className="origin">{remaining} left</span>
+      </button>
+      {open ? (
+        <ul id={`day-${id}`} className="day-tasks">
+          {children}
+        </ul>
+      ) : null}
+    </li>
+  )
+}
+
 function TaskItem({
   task,
   weekStart,
+  showOrigin,
   onToggle,
   onDelete,
   onAddSubtask,
@@ -47,6 +86,7 @@ function TaskItem({
 }: {
   task: Task
   weekStart: string
+  showOrigin: boolean
   onToggle: () => void
   onDelete: () => void
   onAddSubtask: (title: string) => void
@@ -75,9 +115,11 @@ function TaskItem({
           <input type="checkbox" checked={task.done} onChange={onToggle} />
           <span className="task-copy">
             <span className="task-title">{task.title}</span>
-            <span className="origin">
-              {taskOriginLabel(task.createdAt, weekStart)}
-            </span>
+            {showOrigin ? (
+              <span className="origin">
+                {taskOriginLabel(task.createdAt, weekStart)}
+              </span>
+            ) : null}
           </span>
         </label>
         <div className="task-actions">
@@ -145,6 +187,9 @@ export default function App() {
   const [store, setStore] = useState<TaskStore>(() => loadStore())
   const [title, setTitle] = useState('')
   const [filter, setFilter] = useState<Filter>('all')
+  const [openGroups, setOpenGroups] = useState<Readonly<Record<string, boolean>>>(
+    {},
+  )
 
   useEffect(() => {
     const applyRollover = () => {
@@ -161,15 +206,52 @@ export default function App() {
     }
   }, [])
 
-  const shown = useMemo(
-    () => visibleTasks(store.tasks, filter),
-    [store.tasks, filter],
+  const sections = useMemo(
+    () => groupTasksForList(store.tasks, store.weekStart),
+    [store.tasks, store.weekStart],
+  )
+
+  const visibleSections = useMemo(
+    () =>
+      sections
+        .map((section) => ({
+          section,
+          visible: visibleTasks(section.tasks, filter),
+        }))
+        .filter((item) => item.visible.length > 0),
+    [sections, filter],
   )
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setStore((current) => addTask(current, title))
     setTitle('')
+  }
+
+  function toggleGroup(id: string) {
+    setOpenGroups((current) => ({ ...current, [id]: !current[id] }))
+  }
+
+  function renderTask(task: Task, showOrigin: boolean) {
+    return (
+      <TaskItem
+        key={task.id}
+        task={task}
+        weekStart={store.weekStart}
+        showOrigin={showOrigin}
+        onToggle={() => setStore((current) => toggleTask(current, task.id))}
+        onDelete={() => setStore((current) => deleteTask(current, task.id))}
+        onAddSubtask={(itemTitle) =>
+          setStore((current) => addSubtask(current, task.id, itemTitle))
+        }
+        onToggleSubtask={(subtaskId) =>
+          setStore((current) => toggleSubtask(current, task.id, subtaskId))
+        }
+        onDeleteSubtask={(subtaskId) =>
+          setStore((current) => deleteSubtask(current, task.id, subtaskId))
+        }
+      />
+    )
   }
 
   return (
@@ -207,36 +289,40 @@ export default function App() {
         ))}
       </div>
 
-      {shown.length === 0 ? (
+      {visibleSections.length === 0 ? (
         <p className="empty">{emptyMessage(store.tasks.length, filter)}</p>
       ) : (
         <ul className="tasks">
-          {shown.map((task) => (
-            <TaskItem
-              key={task.id}
-              task={task}
-              weekStart={store.weekStart}
-              onToggle={() =>
-                setStore((current) => toggleTask(current, task.id))
+          {visibleSections.flatMap(({ section, visible }) => {
+            switch (section.kind) {
+              case 'today':
+                return visible.map((task) => renderTask(task, true))
+              case 'earlier':
+              case 'pastDay': {
+                const groupId =
+                  section.kind === 'earlier' ? 'earlier' : section.date
+                const label =
+                  section.kind === 'earlier' ? 'Earlier' : section.label
+                const showOrigin = section.kind === 'earlier'
+                return [
+                  <DayGroup
+                    key={groupId}
+                    id={groupId}
+                    label={label}
+                    remaining={openTaskCount(section.tasks)}
+                    open={Boolean(openGroups[groupId])}
+                    onToggle={() => toggleGroup(groupId)}
+                  >
+                    {visible.map((task) => renderTask(task, showOrigin))}
+                  </DayGroup>,
+                ]
               }
-              onDelete={() =>
-                setStore((current) => deleteTask(current, task.id))
+              default: {
+                const _exhaustive: never = section
+                return _exhaustive
               }
-              onAddSubtask={(itemTitle) =>
-                setStore((current) => addSubtask(current, task.id, itemTitle))
-              }
-              onToggleSubtask={(subtaskId) =>
-                setStore((current) =>
-                  toggleSubtask(current, task.id, subtaskId),
-                )
-              }
-              onDeleteSubtask={(subtaskId) =>
-                setStore((current) =>
-                  deleteSubtask(current, task.id, subtaskId),
-                )
-              }
-            />
-          ))}
+            }
+          })}
         </ul>
       )}
     </main>

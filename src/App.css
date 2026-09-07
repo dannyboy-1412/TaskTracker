@@ -188,9 +188,52 @@
 }
 
 .tasks > li.done .task-title,
+.day-tasks > li.done .task-title,
 .subtasks li.done .task-title {
   color: var(--muted);
   text-decoration: line-through;
+}
+
+.day-toggle {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.3rem 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+  cursor: pointer;
+  text-align: left;
+}
+
+.day-toggle:hover {
+  color: var(--ink-soft);
+}
+
+.day-toggle[aria-expanded='true'] {
+  color: var(--ink);
+}
+
+.day-label {
+  font-weight: 500;
+}
+
+.day-tasks {
+  list-style: none;
+  margin: 0.85rem 0 0 1.75rem;
+  padding: 0.75rem 0 0;
+  border-top: 1px dashed var(--border);
+}
+
+.day-tasks > li {
+  padding: 1rem 0;
+  border-top: 1px solid var(--border);
+}
+
+.day-tasks > li:first-child {
+  border-top: 0;
+  padding-top: 0;
 }
 
 .subtasks {
@@ -236,7 +279,8 @@
     padding-top: 0.5rem;
   }
 
-  .subtasks {
+  .subtasks,
+  .day-tasks {
     margin-left: 0;
   }
 }
