@@ -1,19 +1,18 @@
 :root {
-  --text: #4b4453;
-  --text-h: #141218;
-  --bg: #f6f4f1;
-  --panel: #fff;
-  --border: #e5e4e7;
-  --muted: #8b8494;
-  --accent: #2f6f4e;
-  --accent-text: #fff;
-  --danger: #9b3b3b;
-  --shadow: 0 12px 32px rgba(20, 18, 24, 0.08);
+  --bg: #f7f6f3;
+  --surface: #ffffff;
+  --border: #e4e1da;
+  --ink: #1c1b19;
+  --ink-soft: #55524c;
+  --muted: #96918a;
+  --danger: #a4432c;
+  --focus: #1c1b19;
 
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, 'SFMono-Regular', Consolas, monospace;
 
-  font: 16px/1.45 var(--sans);
-  color: var(--text);
+  font: 16px/1.5 var(--sans);
+  color: var(--ink-soft);
   background: var(--bg);
   color-scheme: light dark;
   font-synthesis: none;
@@ -23,16 +22,14 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --text: #c8c3ce;
-    --text-h: #f4f2f7;
-    --bg: #14151a;
-    --panel: #1c1d24;
-    --border: #2e303a;
-    --muted: #8b8494;
-    --accent: #6fbf93;
-    --accent-text: #102016;
-    --danger: #e08a8a;
-    --shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+    --bg: #131211;
+    --surface: #1a1918;
+    --border: #322f2b;
+    --ink: #f3f1ed;
+    --ink-soft: #c9c5bd;
+    --muted: #7d786f;
+    --danger: #d97a5f;
+    --focus: #f3f1ed;
   }
 }
 
@@ -55,15 +52,28 @@ body {
 
 h1 {
   margin: 0;
-  font-size: 1.75rem;
+  font-size: 1.4rem;
   font-weight: 600;
-  letter-spacing: -0.03em;
-  color: var(--text-h);
+  letter-spacing: -0.01em;
+  color: var(--ink);
 }
 
 button,
 input {
   font: inherit;
+  color: inherit;
+}
+
+button {
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
 }
 
 .sr-only {
