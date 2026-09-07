@@ -1,0 +1,16 @@
+---
+description: Commit and push to the remote after a feature is done and checks pass
+alwaysApply: true
+---
+
+# Commit and push when a feature is done
+
+After a feature or fix is implemented, do not wait for the user to ask.
+
+1. Verify the work. For UI changes, exercise the flow in the browser. For store or logic changes, run the relevant checks.
+2. Run `npm run build` and `npm run lint`. Treat those as the tests for this repo until a dedicated test suite exists.
+3. If either command fails, fix the issue and re-run. Do not commit a failing tree.
+4. If they pass, commit the relevant files on the current branch. Message should say why the change exists, in 1–2 sentences. Do not commit secrets, `.env`, or generated `dist/` output.
+5. Push to the tracked remote with `git push -u origin HEAD`.
+
+Do this even if the user does not say "commit" or "push", as long as the feature is complete and the checks passed. If they explicitly say not to commit, skip it.
