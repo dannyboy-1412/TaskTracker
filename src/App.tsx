@@ -5,6 +5,7 @@ import {
   formatWeekRange,
   loadStore,
   refreshStore,
+  taskOriginLabel,
   toggleTask,
   type Task,
   type TaskStore,
@@ -111,7 +112,12 @@ export default function App() {
                     setStore((current) => toggleTask(current, task.id))
                   }
                 />
-                <span>{task.title}</span>
+                <span className="task-copy">
+                  <span className="task-title">{task.title}</span>
+                  <span className="origin">
+                    {taskOriginLabel(task.createdAt, store.weekStart)}
+                  </span>
+                </span>
               </label>
               <button
                 type="button"

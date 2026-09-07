@@ -34,6 +34,21 @@ export function parseIsoDate(iso: string): Date {
   return new Date(year, month - 1, day)
 }
 
+const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000
+
+export function taskOriginLabel(createdAt: string, weekStart: string): string {
+  const created = new Date(createdAt)
+  if (Number.isNaN(created.getTime())) return ''
+  const createdWeek = mondayOf(created).getTime()
+  const currentWeek = parseIsoDate(weekStart).getTime()
+  const weeksAgo = Math.round((currentWeek - createdWeek) / MS_PER_WEEK)
+  if (weeksAgo <= 0) {
+    return created.toLocaleDateString('en-GB', { weekday: 'long' })
+  }
+  if (weeksAgo === 1) return 'last week'
+  return `${weeksAgo} weeks before`
+}
+
 export function formatWeekRange(weekStart: string): string {
   const start = parseIsoDate(weekStart)
   const end = new Date(start)
