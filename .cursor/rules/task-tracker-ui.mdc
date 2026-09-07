@@ -1,0 +1,29 @@
+---
+description: UI conventions for the Vite task tracker
+globs: src/**/*.{tsx,css}
+alwaysApply: false
+---
+
+# Task tracker UI
+
+Read `principle-experience-first` before changing layout or copy.
+
+## Look
+
+- One column, no card shell, no drop shadow, no border radius on the page.
+- Ink, muted, and hairline borders. No green (or other) brand accent. Checkboxes use `accent-color: var(--ink)`.
+- Filters are underlined text tabs, not pills.
+- Add fields are underline inputs, not boxed inputs with a fill.
+- Origin labels are small monospace text (`· Monday`), not bordered chips.
+- Dark mode via `prefers-color-scheme` and the same token names in `:root`.
+
+## Interaction
+
+- Keep add, complete, delete, filter, items/subtasks, and week tags working. Restyle does not drop a control.
+- Tap targets stay usable on a phone. Stack the task row on small screens; do not shrink delete/items into unreadably small pills.
+- Empty states stay one short sentence.
+
+## Where code lives
+
+- Screen: `src/App.tsx`. Styles: `src/App.css` and `src/index.css`.
+- Persistence and week math stay in `src/taskStore.ts`. Do not duplicate rollover or TTL in the UI.

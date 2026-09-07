@@ -1,0 +1,21 @@
+---
+description: Route Task tracker work through project pstack skills
+alwaysApply: true
+---
+
+# pstack on this project
+
+This repo is a Vite + React weekly task tracker on GitHub Pages. Skills live in `.cursor/skills/`. Read a skill before you follow it.
+
+## Always
+
+- Apply `unslop` to every reply and any prose you write.
+- TypeScript edits follow `typescript-best-practices`. Apply `principle-type-system-discipline` first. Parse `localStorage` JSON at the store boundary (`principle-boundary-discipline`); do not re-validate inside components.
+- Tasks, subtasks, week rollover, and the 30-day TTL live in `src/taskStore.ts`. Change the data shape there first, then the UI.
+- Smallest change that solves it. Do not add a backend, UI library, or extra state layer unless the user asks.
+- Prove UI in the running app (`principle-prove-it-works`). `npm run build` is not enough. Click add, complete, items, filter, and reload.
+- Editorial feel over implementation convenience (`principle-experience-first`). Hairlines and type, not cards, pills, or a brand-color CTA.
+
+## Do not load
+
+`make-bot-ui`, `automate-me`, `setup-pstack`, and `bro` are not part of this project.
